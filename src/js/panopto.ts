@@ -539,6 +539,10 @@
 			event.key === "Shift" || event.code === "ShiftLeft" || event.code === "ShiftRight";
 		const arrowUpEh = (event: KeyboardEvent) => event.code === "ArrowUp" || event.key === "ArrowUp";
 		const arrowDownEh = (event: KeyboardEvent) => event.code === "ArrowDown" || event.key === "ArrowDown";
+		const speedStepUpEh = (event: KeyboardEvent) =>
+			event.shiftKey && (event.code === "Period" || event.key === ">");
+		const speedStepDownEh = (event: KeyboardEvent) =>
+			event.shiftKey && (event.code === "Comma" || event.key === "<");
 
 		document.addEventListener(
 			"keydown",
@@ -553,6 +557,20 @@
 						shiftSpeedBoostActiveEh = true;
 					}
 					setPlaybackRateForAllVideos(holdSpeed, true);
+					return;
+				}
+
+				if (speedStepUpEh(event) || speedStepDownEh(event)) {
+					event.stopPropagation();
+					event.stopImmediatePropagation();
+					event.preventDefault();
+					const baseSpeed = shiftPressedEh
+						? playbackRateBeforeHold
+						: (document.getElementById("primaryVideo") as HTMLVideoElement).playbackRate;
+					const nextSpeed = clampSpeed(baseSpeed + (speedStepUpEh(event) ? SPEED_STEP : -SPEED_STEP));
+					// keep the shift-hold baseline in sync so releasing shift doesn't undo this permanent step
+					if (shiftPressedEh) playbackRateBeforeHold = nextSpeed;
+					setPlaybackRateForAllVideos(nextSpeed);
 					return;
 				}
 
